@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <MenuBar fx:id="menuBar">
+        <menus>
+          <Menu fx:id="menuFile" mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem fx:id="menuItemClose" mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu fx:id="MenuHelp" mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <HBox alignment="CENTER" prefHeight="39.0" prefWidth="600.0">
+         <children>
+            <ImageView fitHeight="29.0" fitWidth="29.0" pickOnBounds="true" preserveRatio="true">
+               <HBox.margin>
+                  <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
+               </HBox.margin>
+            </ImageView>
+            <Label text="Extension: ">
+               <padding>
+                  <Insets right="20.0" />
+               </padding>
+            </Label>
+            <TextField fx:id="tfFilter" />
+         </children>
+      </HBox>
+      <TableView fx:id="tableView" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+        <columns>
+          <TableColumn fx:id="tcolType" prefWidth="82.0" text="Type" />
+          <TableColumn fx:id="tcolName" prefWidth="171.0" text="Name" />
+            <TableColumn fx:id="tcolSize" minWidth="0.0" prefWidth="59.0" text="Size" />
+        </columns>
+      </TableView>
+   </children>
+</VBox>
