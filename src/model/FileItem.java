@@ -1,19 +1,35 @@
 package model;
 
-import javafx.scene.image.ImageView;
+import java.io.File;
 
 public class FileItem {
-    private ImageView type;
+    private String type;
     private String name;
-    private int size;
+    private String size;
 
-    public FileItem(ImageView type, String name, int size) {
-        this.type = type;
-        this.name = name;
-        this.size = size;
+    public FileItem(File file) {
+        if (file == null)
+            throw new IllegalArgumentException("file cannot be null");
+
+        this.type = file.isDirectory() ? "directory" : "file";
+        this.name = file.getName();
+        this.size = "file".equals(type) ? humanReadableFileSize(file.length()) : "";
     }
 
-    public ImageView getType() {
+    /**
+     * Convert file size into human-readable format
+     *
+     * @param size the file size to convert
+     * @return string representing the file size in human-readable format
+     */
+    private static String humanReadableFileSize(long size) {
+        if (size < 1024) return size + " B";
+        int exp = (int) (Math.log(size) / Math.log(1024));
+        String postfix = ("KMGTPE").charAt(exp - 1) + ("iB");
+        return String.format("%.1f %s", size / Math.pow(1024, exp), postfix);
+    }
+
+    public String getType() {
         return type;
     }
 
@@ -21,7 +37,7 @@ public class FileItem {
         return name;
     }
 
-    public int getSize() {
+    public String getSize() {
         return size;
     }
 }

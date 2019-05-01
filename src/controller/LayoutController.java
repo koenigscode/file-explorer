@@ -8,8 +8,12 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import model.FileItem;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ResourceBundle;
 
 public class LayoutController implements Initializable {
@@ -39,6 +43,12 @@ public class LayoutController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         initMenu();
         initTableColumns();
+
+        Path path = Paths.get(System.getProperty("user.home"));
+        for (File f : path.toFile().listFiles()) {
+            tableView.getItems().add(new FileItem(f));
+        }
+
     }
 
     /**
