@@ -4,6 +4,9 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.ImageView;
+import model.FileItem;
 
 import java.io.IOException;
 import java.net.URL;
@@ -23,18 +26,28 @@ public class LayoutController implements Initializable {
     @FXML
     public TextField tfFilter;
     @FXML
-    public TableView tableView;
+    public TableView<FileItem> tableView;
     @FXML
-    public TableColumn tcolType;
+    public TableColumn<String, ImageView> tcolType;
     @FXML
-    public TableColumn tcolName;
+    public TableColumn<String, String> tcolName;
     @FXML
-    public TableColumn tcolSize;
+    public TableColumn<String, String> tcolSize;
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initMenu();
+        initTableColumns();
+    }
+
+    /**
+     * Initialize the TableView's columns
+     */
+    private void initTableColumns() {
+        tcolType.setCellValueFactory(new PropertyValueFactory<>("type"));
+        tcolName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        tcolSize.setCellValueFactory(new PropertyValueFactory<>("size"));
     }
 
     /**
