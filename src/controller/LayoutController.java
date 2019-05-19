@@ -1,6 +1,10 @@
 package controller;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Cursor;
@@ -24,6 +28,10 @@ import java.nio.file.Paths;
 import java.util.ResourceBundle;
 
 public class LayoutController implements Initializable {
+
+    private final ObservableList<FileItem> items = FXCollections.observableArrayList();
+    private final FilteredList<FileItem> filteredItems = new FilteredList<>(items, p -> true);
+    private final SortedList<FileItem> sortedItems = new SortedList<>(filteredItems);
     @FXML
     public MenuBar menuBar;
     @FXML
@@ -54,23 +62,11 @@ public class LayoutController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initMenu();
-        initTableColumns();
+        initTableView();
         initImgBack();
 
         Path userHome = Paths.get(System.getProperty("user.home"));
         navigate(userHome.toFile());
-
-        tableView.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
-                int index = tableView.getSelectionModel().getSelectedIndex();
-                FileItem fi = tableView.getItems().get(index);
-
-                if (fi.getFile().isDirectory())
-                    navigate(fi.getFile());
-                else
-                    open(fi.getFile());
-            }
-        });
 
         tfPath.setOnAction(event -> {
             try {
@@ -86,6 +82,27 @@ public class LayoutController implements Initializable {
             }
         });
 
+        tfFilter.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredItems.setPredicate(fileItem -> {
+                // If filter text is empty, display all
+                if (newValue == null || newValue.isEmpty()) return true;
+                if (fileItem.getFile().isDirectory()) return false;
+
+                String fileExt = "";
+                String filterExt = newValue;
+
+                int i = fileItem.getName().lastIndexOf('.');
+                if (i > 0)
+                    fileExt = fileItem.getName().substring(i + 1).toLowerCase();
+
+
+                if (newValue.charAt(0) == '.')
+                    filterExt = newValue.substring(1);
+
+                return fileExt.equals(filterExt.toLowerCase());
+            });
+        });
+
     }
 
     private void goUp() {
@@ -95,10 +112,10 @@ public class LayoutController implements Initializable {
     }
 
     private void navigate(File file) {
-        tableView.getItems().clear();
+        items.clear();
         System.out.println(file.getPath());
         for (File f : file.listFiles()) {
-            tableView.getItems().add(new FileItem(f));
+            items.add(new FileItem(f));
         }
         currentFile = file;
         tfPath.setText(file.getPath());
@@ -114,7 +131,6 @@ public class LayoutController implements Initializable {
     }
 
     private void showAlert(Alert.AlertType type, String title, String header, String content) {
-        /*TODO: set parent window*/
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setHeaderText(header);
@@ -140,6 +156,25 @@ public class LayoutController implements Initializable {
                 showAlert(Alert.AlertType.ERROR, "About page could not be opened", "About page could not be opened", "");
             }
         });
+    }
+
+    private void initTableView() {
+        sortedItems.comparatorProperty().set(FileItem::compareTo);
+        tableView.setItems(sortedItems);
+
+        tableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                int index = tableView.getSelectionModel().getSelectedIndex();
+                FileItem fi = tableView.getItems().get(index);
+
+                if (fi.getFile().isDirectory())
+                    navigate(fi.getFile());
+                else
+                    open(fi.getFile());
+            }
+        });
+
+        initTableColumns();
     }
 
     /**

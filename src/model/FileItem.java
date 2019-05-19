@@ -4,7 +4,7 @@ import javafx.scene.image.ImageView;
 
 import java.io.File;
 
-public class FileItem {
+public class FileItem implements Comparable<FileItem> {
     private final File file;
     private final String name;
     private final String size;
@@ -57,4 +57,10 @@ public class FileItem {
         return file;
     }
 
+    @Override
+    public int compareTo(FileItem o) {
+        if (getFile().isDirectory() && !o.getFile().isDirectory()) return -1;
+        if (!getFile().isDirectory() && o.getFile().isDirectory()) return 1;
+        return getName().compareTo(o.getName());
+    }
 }
