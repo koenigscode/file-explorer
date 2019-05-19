@@ -31,12 +31,12 @@
       </MenuBar>
       <HBox alignment="CENTER" prefHeight="25.0" prefWidth="162.0">
          <children>
-            <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="imgBack" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../res/arrow-left.png" />
                </image>
             </ImageView>
-            <TextField HBox.hgrow="ALWAYS">
+            <TextField fx:id="tfPath" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets left="10.0" right="10.0" />
                </HBox.margin>
