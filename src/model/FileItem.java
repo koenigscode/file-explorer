@@ -1,19 +1,21 @@
 package model;
 
+import javafx.scene.image.ImageView;
+
 import java.io.File;
 
 public class FileItem {
-    private String type;
-    private String name;
-    private String size;
+    private final File file;
+    private final String name;
+    private final String size;
 
     public FileItem(File file) {
         if (file == null)
             throw new IllegalArgumentException("file cannot be null");
 
-        this.type = file.isDirectory() ? "directory" : "file";
+        this.file = file;
         this.name = file.getName();
-        this.size = "file".equals(type) ? humanReadableFileSize(file.length()) : "";
+        this.size = file.isDirectory() ? "" : humanReadableFileSize(file.length());
     }
 
     /**
@@ -29,8 +31,18 @@ public class FileItem {
         return String.format("%.1f %s", size / Math.pow(1024, exp), postfix);
     }
 
-    public String getType() {
-        return type;
+    public ImageView getTypeIcon() {
+        String type = this.file.isDirectory() ? "directory" : "file";
+        File iconFile = new File("src/res/" + type + ".png");
+
+        if (iconFile.exists()) {
+            ImageView imageView = new ImageView(iconFile.toURI().toString());
+            imageView.setPreserveRatio(true);
+            imageView.setFitWidth(20);
+            return imageView;
+        }
+
+        return null;
     }
 
     public String getName() {
@@ -40,4 +52,9 @@ public class FileItem {
     public String getSize() {
         return size;
     }
+
+    public File getFile() {
+        return file;
+    }
+
 }
