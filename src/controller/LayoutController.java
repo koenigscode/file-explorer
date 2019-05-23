@@ -67,23 +67,6 @@ public class LayoutController implements Initializable {
     private File currentFile;
 
     /**
-     * Check if a path is a junction
-     *
-     * @param p the path to check
-     * @return true if the path is a junction, else false
-     */
-    private static boolean isJunction(Path p) {
-        boolean isJunction = false;
-        try {
-            isJunction = (p.compareTo(p.toRealPath()) != 0);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Could not evaluate Path " + p);
-        }
-        return isJunction;
-    }
-
-    /**
      * Initialize the controller
      *
      * @param location  The location used to resolve relative paths for the root object, or
@@ -103,117 +86,6 @@ public class LayoutController implements Initializable {
         File userHome = Paths.get(System.getProperty("user.home")).toFile();
         navigate(userHome); // navigate to user home on startup
 
-    }
-
-    /**
-     * Initialize the path text field
-     */
-    private void initTfPath() {
-        tfPath.setOnAction(event -> {
-            try {
-                //append separator to end of path as "D:" points to the project directory and "D:\" to the D: drive
-                Path path = Paths.get(tfPath.getText() + File.separator);
-                if (!path.toFile().exists())
-                    showAlert(Alert.AlertType.ERROR, "Path does not exist", "Path does not exist",
-                            "The entered path does not exist");
-                else
-                    navigate(path.toFile());
-
-            } catch (InvalidPathException e) {
-                showAlert(Alert.AlertType.ERROR, "Invalid Path", "Invalid Path",
-                        "You entered an invalid path");
-            }
-        });
-    }
-
-    /**
-     * Filter the filteredItems list
-     * - filter for extension if entered
-     * - filter for hidden files if checkbox is ticked in menubar
-     */
-    private void filter() {
-        filteredItems.setPredicate(fileItem -> {
-            String fileExt = "";
-            String filterExt = tfFilter.getText();
-            int i = fileItem.getFile().getName().lastIndexOf('.');
-
-            if (!menuItemShowHidden.isSelected() && fileItem.getFile().getName().charAt(0) == '.')
-                return false;
-            if(filterExt.isEmpty() ) return true;
-            if(fileItem.getFile().isDirectory()) return false;
-
-            fileExt = fileItem.getFile().getName().substring(i + 1).toLowerCase();
-            if (filterExt.charAt(0) == '.')
-                filterExt = filterExt.substring(1);
-
-            return fileExt.contains(filterExt.toLowerCase());
-        });
-    }
-
-    /**
-     * Navigate to parent directory
-     */
-    private void goUp() {
-        File parent = currentFile.getParentFile();
-        if (parent != null) //check if folder has parent folder
-            navigate(parent);
-    }
-
-    /**
-     * Navigate to the given directory
-     *
-     * @param file directory to navigate into
-     */
-    private void navigate(File file) {
-        if (file == null || !file.isDirectory()) return;
-        if (isJunction(file.toPath())) {
-            showAlert(Alert.AlertType.ERROR, "Can't Open Junction", "Can't Open Junction",
-                    "This file is a junction and could therefore not be opened");
-            return;
-        }
-
-        File[] files = file.listFiles();
-        if (files == null) return;
-
-        items.clear();
-        for (File f : files) {
-            items.add(new FileItem(f));
-        }
-
-        currentFile = file;
-        tfPath.setText(file.getPath());
-    }
-
-    /**
-     * Open a given file
-     *
-     * @param file the file to open
-     */
-    private void open(File file) {
-        try {
-            Desktop.getDesktop().open(file); // open file in corresponding application
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Error opening File", "Could not open file",
-                    "An error occurred when trying to open the file in its corresponding program");
-        }
-    }
-
-    /**
-     * Create and show an Alert
-     *
-     * @param type    the alert's type
-     * @param title   the alert's title
-     * @param header  the alert's header
-     * @param content the alert's text to show
-     */
-    private void showAlert(Alert.AlertType type, String title, String header, String content) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(header);
-        alert.setContentText(content);
-        alert.initModality(Modality.APPLICATION_MODAL);
-        alert.initOwner(tableView.getScene().getWindow());
-        alert.showAndWait();
     }
 
     /**
@@ -244,6 +116,7 @@ public class LayoutController implements Initializable {
         tableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) { // mouse button clicked twice
                 int index = tableView.getSelectionModel().getSelectedIndex();
+                if (index < 0) return; // do nothing if table column labels got clicked
                 FileItem fi = tableView.getItems().get(index); //clicked FileItem
 
                 if (fi.getFile().isDirectory())
@@ -275,4 +148,126 @@ public class LayoutController implements Initializable {
         imgBack.setOnMouseEntered(event -> imgBack.getScene().setCursor(Cursor.HAND));
         imgBack.setOnMouseExited(event -> imgBack.getScene().setCursor(Cursor.DEFAULT));
     }
+
+    /**
+     * Initialize the path text field
+     */
+    private void initTfPath() {
+        tfPath.setOnAction(event -> {
+            try {
+                //append separator to end of path as "D:" points to the project directory and "D:\" to the D: drive
+                Path path = Paths.get(tfPath.getText() + File.separator);
+                if (!path.toFile().exists())
+                    showAlert(Alert.AlertType.ERROR, "Path does not exist", "Path does not exist",
+                            "The entered path does not exist");
+                else
+                    navigate(path.toFile());
+
+            } catch (InvalidPathException e) {
+                showAlert(Alert.AlertType.ERROR, "Invalid Path", "Invalid Path",
+                        "You entered an invalid path");
+            }
+        });
+    }
+
+    /**
+     * Navigate to the given directory
+     *
+     * @param file directory to navigate into
+     */
+    private void navigate(File file) {
+        if (file == null || !file.isDirectory()) return;
+        if (isJunction(file.toPath())) {
+            showAlert(Alert.AlertType.ERROR, "Can't Open Junction", "Can't Open Junction",
+                    "This file is a junction and could therefore not be opened");
+            return;
+        }
+
+        File[] files = file.listFiles();
+        if (files == null) return;
+
+        items.clear();
+        for (File f : files) {
+            items.add(new FileItem(f));
+        }
+
+        currentFile = file;
+        tfPath.setText(file.getPath());
+    }
+
+    /**
+     * Navigate to parent directory
+     */
+    private void goUp() {
+        File parent = currentFile.getParentFile();
+        if (parent != null) //check if folder has parent folder
+            navigate(parent);
+    }
+
+    /**
+     * Open a given file
+     *
+     * @param file the file to open
+     */
+    private void open(File file) {
+        try {
+            Desktop.getDesktop().open(file); // open file in corresponding application
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error opening File", "Could not open file",
+                    "An error occurred when trying to open the file in its corresponding program");
+        }
+    }
+
+    /**
+     * Filter the filteredItems list
+     * - filter for extension if entered
+     * - filter for hidden files if checkbox is ticked in menubar
+     */
+    private void filter() {
+        filteredItems.setPredicate(fileItem -> {
+            String[] exts = tfFilter.getText().split(",");
+            for (int i = 0; i < exts.length; i++) {
+                exts[i] = exts[i].trim();
+            }
+            return fileItem.hasExtension(exts, menuItemShowHidden.isSelected());
+
+        });
+    }
+
+    /**
+     * Check if a path is a junction
+     *
+     * @param p the path to check
+     * @return true if the path is a junction, else false
+     */
+    private static boolean isJunction(Path p) {
+        boolean isJunction = false;
+        try {
+            isJunction = (p.compareTo(p.toRealPath()) != 0);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Could not evaluate Path " + p);
+        }
+        return isJunction;
+    }
+
+    /**
+     * Create and show an Alert
+     *
+     * @param type    the alert's type
+     * @param title   the alert's title
+     * @param header  the alert's header
+     * @param content the alert's text to show
+     */
+    private void showAlert(Alert.AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.initModality(Modality.APPLICATION_MODAL);
+        alert.initOwner(tableView.getScene().getWindow());
+        alert.showAndWait();
+    }
+
+
 }
