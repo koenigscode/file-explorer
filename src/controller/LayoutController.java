@@ -27,37 +27,56 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ResourceBundle;
 
+/**
+ * @author Koenig Michael
+ */
 public class LayoutController implements Initializable {
+    @FXML
+    private MenuBar menuBar;
+    @FXML
+    private Menu menuFile;
+    @FXML
+    private MenuItem menuItemClose;
+    @FXML
+    private Menu menuView;
+    @FXML
+    private CheckMenuItem menuItemShowHidden;
+    @FXML
+    private Menu menuHelp;
+    @FXML
+    private MenuItem menuItemAbout;
+    @FXML
+    private TextField tfFilter;
+    @FXML
+    private TextField tfPath;
+    @FXML
+    private TableView<FileItem> tableView;
+    @FXML
+    private TableColumn<String, ImageView> tcolType;
+    @FXML
+    private TableColumn<String, String> tcolName;
+    @FXML
+    private TableColumn<String, String> tcolSize;
+    @FXML
+    private ImageView imgBack;
 
     private final ObservableList<FileItem> items = FXCollections.observableArrayList();
     private final FilteredList<FileItem> filteredItems = new FilteredList<>(items, p -> true);
     private final SortedList<FileItem> sortedItems = new SortedList<>(filteredItems);
-    @FXML
-    public MenuBar menuBar;
-    @FXML
-    public Menu menuFile;
-    @FXML
-    public MenuItem menuItemClose;
-    @FXML
-    public Menu menuHelp;
-    @FXML
-    public MenuItem menuItemAbout;
-    @FXML
-    public TextField tfFilter;
-    @FXML
-    public TextField tfPath;
-    @FXML
-    public TableView<FileItem> tableView;
-    @FXML
-    public TableColumn<String, ImageView> tcolType;
-    @FXML
-    public TableColumn<String, String> tcolName;
-    @FXML
-    public TableColumn<String, String> tcolSize;
-    @FXML
-    private ImageView imgBack;
-
     private File currentFile;
+
+
+    private static boolean isJunction(Path p) {
+        boolean isJunction = false;
+        try {
+            isJunction = (p.compareTo(p.toRealPath()) != 0);
+        } catch (IOException e) {
+            e.printStackTrace();
+            e.printStackTrace();
+            System.out.println("Could not evalute Path " + p);
+        }
+        return isJunction;
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -82,27 +101,30 @@ public class LayoutController implements Initializable {
             }
         });
 
-        tfFilter.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredItems.setPredicate(fileItem -> {
-                // If filter text is empty, display all
-                if (newValue == null || newValue.isEmpty()) return true;
-                if (fileItem.getFile().isDirectory()) return false;
+        tfFilter.textProperty().addListener((observable, oldValue, newValue) -> filter());
+        menuItemShowHidden.selectedProperty().addListener((observable, oldValue, newValue) -> filter());
+    }
 
-                String fileExt = "";
-                String filterExt = newValue;
+    private void filter() {
+        filteredItems.setPredicate(fileItem -> {
+            String text = tfFilter.getText();
+            if (!menuItemShowHidden.isSelected() && fileItem.getName().charAt(0) == '.') return false;
+            if (text == null || text.isEmpty()) return true;
+            if (fileItem.getFile().isDirectory()) return false;
 
-                int i = fileItem.getName().lastIndexOf('.');
-                if (i > 0)
-                    fileExt = fileItem.getName().substring(i + 1).toLowerCase();
+            String fileExt = "";
+            String filterExt = text;
+
+            int i = fileItem.getName().lastIndexOf('.');
+            if (i > 0)
+                fileExt = fileItem.getName().substring(i + 1).toLowerCase();
 
 
-                if (newValue.charAt(0) == '.')
-                    filterExt = newValue.substring(1);
+            if (text.charAt(0) == '.')
+                filterExt = text.substring(1);
 
-                return fileExt.equals(filterExt.toLowerCase());
-            });
+            return fileExt.equals(filterExt.toLowerCase());
         });
-
     }
 
     private void goUp() {
@@ -112,8 +134,14 @@ public class LayoutController implements Initializable {
     }
 
     private void navigate(File file) {
+        if (file == null || !file.isDirectory()) return;
+        if (isJunction(file.toPath())) {
+            showAlert(Alert.AlertType.ERROR, "Can't Open Junction", "Can't Open Junction",
+                    "This file is a junction and could therefore not be opened");
+            return;
+        }
+
         items.clear();
-        System.out.println(file.getPath());
         for (File f : file.listFiles()) {
             items.add(new FileItem(f));
         }

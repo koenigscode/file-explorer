@@ -4,6 +4,9 @@ import javafx.scene.image.ImageView;
 
 import java.io.File;
 
+/**
+ * @author Koenig Michael
+ */
 public class FileItem implements Comparable<FileItem> {
     private final File file;
     private final String name;
@@ -49,10 +52,6 @@ public class FileItem implements Comparable<FileItem> {
         return name;
     }
 
-    public String getSize() {
-        return size;
-    }
-
     public File getFile() {
         return file;
     }
@@ -61,6 +60,6 @@ public class FileItem implements Comparable<FileItem> {
     public int compareTo(FileItem o) {
         if (getFile().isDirectory() && !o.getFile().isDirectory()) return -1;
         if (!getFile().isDirectory() && o.getFile().isDirectory()) return 1;
-        return getName().compareTo(o.getName());
+        return getName().toLowerCase().compareTo(o.getName().toLowerCase());
     }
 }
