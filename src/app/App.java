@@ -11,6 +11,11 @@ import javafx.stage.Stage;
  */
 public class App extends Application {
 
+    /**
+     * Main entry point for the JavaFX application
+     *
+     * @param primaryStage primary stage for the application on which the scene will be set
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/view/Layout.fxml"));
@@ -19,7 +24,11 @@ public class App extends Application {
         primaryStage.show();
     }
 
-
+    /**
+     * Launch the application
+     *
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
         launch(args);
     }

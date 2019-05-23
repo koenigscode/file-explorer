@@ -61,35 +61,58 @@ public class LayoutController implements Initializable {
     private ImageView imgBack;
 
     private final ObservableList<FileItem> items = FXCollections.observableArrayList();
+    // wrap FilteredList around items to preserve items list
     private final FilteredList<FileItem> filteredItems = new FilteredList<>(items, p -> true);
     private final SortedList<FileItem> sortedItems = new SortedList<>(filteredItems);
     private File currentFile;
 
-
+    /**
+     * Check if a path is a junction
+     *
+     * @param p the path to check
+     * @return true if the path is a junction, else false
+     */
     private static boolean isJunction(Path p) {
         boolean isJunction = false;
         try {
             isJunction = (p.compareTo(p.toRealPath()) != 0);
         } catch (IOException e) {
             e.printStackTrace();
-            e.printStackTrace();
-            System.out.println("Could not evalute Path " + p);
+            System.out.println("Could not evaluate Path " + p);
         }
         return isJunction;
     }
 
+    /**
+     * Initialize the controller
+     *
+     * @param location  The location used to resolve relative paths for the root object, or
+     *                  null if the location is not known.
+     * @param resources The resources used to localize the root object, or null if
+     *                  the root object was not localized.
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initMenu();
         initTableView();
         initImgBack();
+        initTfPath();
+        // listen for extension filters
+        tfFilter.textProperty().addListener((observable, oldValue, newValue) -> filter());
 
-        Path userHome = Paths.get(System.getProperty("user.home"));
-        navigate(userHome.toFile());
+        File userHome = Paths.get(System.getProperty("user.home")).toFile();
+        navigate(userHome); // navigate to user home on startup
 
+    }
+
+    /**
+     * Initialize the path text field
+     */
+    private void initTfPath() {
         tfPath.setOnAction(event -> {
             try {
-                Path path = Paths.get(tfPath.getText() + "\\");
+                //append separator to end of path as "D:" points to the project directory and "D:\" to the D: drive
+                Path path = Paths.get(tfPath.getText() + File.separator);
                 if (!path.toFile().exists())
                     showAlert(Alert.AlertType.ERROR, "Path does not exist", "Path does not exist",
                             "The entered path does not exist");
@@ -97,42 +120,50 @@ public class LayoutController implements Initializable {
                     navigate(path.toFile());
 
             } catch (InvalidPathException e) {
-                showAlert(Alert.AlertType.ERROR, "Invalid Path", "Invalid Path", "You entered an invalid path");
+                showAlert(Alert.AlertType.ERROR, "Invalid Path", "Invalid Path",
+                        "You entered an invalid path");
             }
         });
-
-        tfFilter.textProperty().addListener((observable, oldValue, newValue) -> filter());
-        menuItemShowHidden.selectedProperty().addListener((observable, oldValue, newValue) -> filter());
     }
 
+    /**
+     * Filter the filteredItems list
+     * - filter for extension if entered
+     * - filter for hidden files if checkbox is ticked in menubar
+     */
     private void filter() {
         filteredItems.setPredicate(fileItem -> {
-            String text = tfFilter.getText();
-            if (!menuItemShowHidden.isSelected() && fileItem.getName().charAt(0) == '.') return false;
-            if (text == null || text.isEmpty()) return true;
-            if (fileItem.getFile().isDirectory()) return false;
-
             String fileExt = "";
-            String filterExt = text;
+            String filterExt = tfFilter.getText();
+            int i = fileItem.getFile().getName().lastIndexOf('.');
 
-            int i = fileItem.getName().lastIndexOf('.');
-            if (i > 0)
-                fileExt = fileItem.getName().substring(i + 1).toLowerCase();
+            if (!menuItemShowHidden.isSelected() && fileItem.getFile().getName().charAt(0) == '.')
+                return false;
+            if(filterExt.isEmpty() ) return true;
+            if(fileItem.getFile().isDirectory()) return false;
 
+            fileExt = fileItem.getFile().getName().substring(i + 1).toLowerCase();
+            if (filterExt.charAt(0) == '.')
+                filterExt = filterExt.substring(1);
 
-            if (text.charAt(0) == '.')
-                filterExt = text.substring(1);
-
-            return fileExt.equals(filterExt.toLowerCase());
+            return fileExt.contains(filterExt.toLowerCase());
         });
     }
 
+    /**
+     * Navigate to parent directory
+     */
     private void goUp() {
         File parent = currentFile.getParentFile();
-        if (parent != null)
+        if (parent != null) //check if folder has parent folder
             navigate(parent);
     }
 
+    /**
+     * Navigate to the given directory
+     *
+     * @param file directory to navigate into
+     */
     private void navigate(File file) {
         if (file == null || !file.isDirectory()) return;
         if (isJunction(file.toPath())) {
@@ -141,25 +172,42 @@ public class LayoutController implements Initializable {
             return;
         }
 
+        File[] files = file.listFiles();
+        if (files == null) return;
+
         items.clear();
-        for (File f : file.listFiles()) {
+        for (File f : files) {
             items.add(new FileItem(f));
         }
+
         currentFile = file;
         tfPath.setText(file.getPath());
     }
 
+    /**
+     * Open a given file
+     *
+     * @param file the file to open
+     */
     private void open(File file) {
         try {
-            Desktop.getDesktop().open(file);
+            Desktop.getDesktop().open(file); // open file in corresponding application
         } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Error opening File", "Could not open file",
-                    "An error occured when trying to open the file in its corresponding program");
+                    "An error occurred when trying to open the file in its corresponding program");
         }
     }
 
+    /**
+     * Create and show an Alert
+     *
+     * @param type    the alert's type
+     * @param title   the alert's title
+     * @param header  the alert's header
+     * @param content the alert's text to show
+     */
     private void showAlert(Alert.AlertType type, String title, String header, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(header);
         alert.setContentText(content);
@@ -172,28 +220,31 @@ public class LayoutController implements Initializable {
      * Initialize the menubar
      */
     private void initMenu() {
-        this.menuItemClose.setOnAction(event -> Platform.exit());
-
-        this.menuItemAbout.setOnAction(event -> {
+        menuItemClose.setOnAction(event -> Platform.exit());
+        menuItemAbout.setOnAction(event -> {
             String url = "https://github.com/koenigscode/file-explorer";
-
             try {
-                java.awt.Desktop.getDesktop().browse(java.net.URI.create(url));
+                Desktop.getDesktop().browse(java.net.URI.create(url));
             } catch (IOException e) {
-                System.out.println();
                 showAlert(Alert.AlertType.ERROR, "About page could not be opened", "About page could not be opened", "");
             }
         });
+        menuItemShowHidden.selectedProperty().addListener((observable, oldValue, newValue) -> filter());
     }
 
+    /**
+     * Initialize the table view
+     * - Set up sortedItems list to sort FileItems
+     * - Open file or directory on double click
+     */
     private void initTableView() {
         sortedItems.comparatorProperty().set(FileItem::compareTo);
-        tableView.setItems(sortedItems);
+        tableView.setItems(sortedItems); // use sortedItems list (= sorted + filtered)
 
         tableView.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
+            if (event.getClickCount() == 2) { // mouse button clicked twice
                 int index = tableView.getSelectionModel().getSelectedIndex();
-                FileItem fi = tableView.getItems().get(index);
+                FileItem fi = tableView.getItems().get(index); //clicked FileItem
 
                 if (fi.getFile().isDirectory())
                     navigate(fi.getFile());
@@ -207,6 +258,7 @@ public class LayoutController implements Initializable {
 
     /**
      * Initialize the TableView's columns
+     * - Set up CellFactories
      */
     private void initTableColumns() {
         tcolType.setCellValueFactory(new PropertyValueFactory<>("typeIcon"));
@@ -214,13 +266,13 @@ public class LayoutController implements Initializable {
         tcolSize.setCellValueFactory(new PropertyValueFactory<>("size"));
     }
 
+    /**
+     * Initialize back button
+     */
     private void initImgBack() {
         imgBack.setOnMouseClicked(event -> goUp());
-        imgBack.setOnMouseEntered(event -> {
-            imgBack.getScene().setCursor(Cursor.HAND);
-        });
-        imgBack.setOnMouseExited(event -> {
-            imgBack.getScene().setCursor(Cursor.DEFAULT);
-        });
+        // set hand cursor on hover
+        imgBack.setOnMouseEntered(event -> imgBack.getScene().setCursor(Cursor.HAND));
+        imgBack.setOnMouseExited(event -> imgBack.getScene().setCursor(Cursor.DEFAULT));
     }
 }

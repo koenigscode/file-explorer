@@ -12,6 +12,11 @@ public class FileItem implements Comparable<FileItem> {
     private final String name;
     private final String size;
 
+    /**
+     * Create a new FileItem object
+     *
+     * @param file the file to encapsulate
+     */
     public FileItem(File file) {
         if (file == null)
             throw new IllegalArgumentException("file cannot be null");
@@ -34,6 +39,11 @@ public class FileItem implements Comparable<FileItem> {
         return String.format("%.1f %s", size / Math.pow(1024, exp), postfix);
     }
 
+    /**
+     * Get the icon of the file type
+     *
+     * @return corresponding icon
+     */
     public ImageView getTypeIcon() {
         String type = this.file.isDirectory() ? "directory" : "file";
         File iconFile = new File("src/res/" + type + ".png");
@@ -48,18 +58,25 @@ public class FileItem implements Comparable<FileItem> {
         return null;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public File getFile() {
         return file;
     }
 
+    public String getName() { return name; }
+
+    public String getSize() {return size;}
+
+    /**
+     * Compare two FileItems
+     *
+     * @param o the FileItem to compare with the this object
+     * @return int corresponding to the sort order
+     */
     @Override
     public int compareTo(FileItem o) {
         if (getFile().isDirectory() && !o.getFile().isDirectory()) return -1;
         if (!getFile().isDirectory() && o.getFile().isDirectory()) return 1;
-        return getName().toLowerCase().compareTo(o.getName().toLowerCase());
+        return getFile().getName().toLowerCase().compareTo(o.getFile().getName().toLowerCase());
     }
+
 }
