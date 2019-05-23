@@ -31,6 +31,7 @@ import java.util.ResourceBundle;
  * @author Koenig Michael
  */
 public class LayoutController implements Initializable {
+
     @FXML
     private MenuBar menuBar;
     @FXML
@@ -69,10 +70,10 @@ public class LayoutController implements Initializable {
     /**
      * Initialize the controller
      *
-     * @param location  The location used to resolve relative paths for the root object, or
-     *                  null if the location is not known.
-     * @param resources The resources used to localize the root object, or null if
-     *                  the root object was not localized.
+     * @param location The location used to resolve relative paths for the root
+     * object, or null if the location is not known.
+     * @param resources The resources used to localize the root object, or null
+     * if the root object was not localized.
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -105,9 +106,8 @@ public class LayoutController implements Initializable {
     }
 
     /**
-     * Initialize the table view
-     * - Set up sortedItems list to sort FileItems
-     * - Open file or directory on double click
+     * Initialize the table view - Set up sortedItems list to sort FileItems -
+     * Open file or directory on double click
      */
     private void initTableView() {
         sortedItems.comparatorProperty().set(FileItem::compareTo);
@@ -116,7 +116,8 @@ public class LayoutController implements Initializable {
         tableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) { // mouse button clicked twice
                 int index = tableView.getSelectionModel().getSelectedIndex();
-                if (index < 0) return; // do nothing if table column labels got clicked
+                if (index < 0)
+                    return; // do nothing if table column labels got clicked
                 FileItem fi = tableView.getItems().get(index); //clicked FileItem
 
                 if (fi.getFile().isDirectory())
@@ -130,8 +131,7 @@ public class LayoutController implements Initializable {
     }
 
     /**
-     * Initialize the TableView's columns
-     * - Set up CellFactories
+     * Initialize the TableView's columns - Set up CellFactories
      */
     private void initTableColumns() {
         tcolType.setCellValueFactory(new PropertyValueFactory<>("typeIcon"));
@@ -176,7 +176,8 @@ public class LayoutController implements Initializable {
      * @param file directory to navigate into
      */
     private void navigate(File file) {
-        if (file == null || !file.isDirectory()) return;
+        if (file == null || !file.isDirectory())
+            return;
         if (isJunction(file.toPath())) {
             showAlert(Alert.AlertType.ERROR, "Can't Open Junction", "Can't Open Junction",
                     "This file is a junction and could therefore not be opened");
@@ -184,7 +185,11 @@ public class LayoutController implements Initializable {
         }
 
         File[] files = file.listFiles();
-        if (files == null) return;
+        if (files == null) {
+            showAlert(Alert.AlertType.ERROR, "Can't Open Folder", "Can't Open Folder",
+                    "This folder could not be opened. Please make sure you have the necessary permissions.");
+            return;
+        }
 
         items.clear();
         for (File f : files) {
@@ -219,9 +224,8 @@ public class LayoutController implements Initializable {
     }
 
     /**
-     * Filter the filteredItems list
-     * - filter for extension if entered
-     * - filter for hidden files if checkbox is ticked in menubar
+     * Filter the filteredItems list - checkExtension for extension if entered -
+     * checkExtension for hidden files if checkbox is ticked in menubar
      */
     private void filter() {
         filteredItems.setPredicate(fileItem -> {
@@ -229,7 +233,7 @@ public class LayoutController implements Initializable {
             for (int i = 0; i < exts.length; i++) {
                 exts[i] = exts[i].trim();
             }
-            return fileItem.hasExtension(exts, menuItemShowHidden.isSelected());
+            return fileItem.checkExtension(exts, menuItemShowHidden.isSelected());
 
         });
     }
@@ -245,7 +249,6 @@ public class LayoutController implements Initializable {
         try {
             isJunction = (p.compareTo(p.toRealPath()) != 0);
         } catch (IOException e) {
-            e.printStackTrace();
             System.out.println("Could not evaluate Path " + p);
         }
         return isJunction;
@@ -254,9 +257,9 @@ public class LayoutController implements Initializable {
     /**
      * Create and show an Alert
      *
-     * @param type    the alert's type
-     * @param title   the alert's title
-     * @param header  the alert's header
+     * @param type the alert's type
+     * @param title the alert's title
+     * @param header the alert's header
      * @param content the alert's text to show
      */
     private void showAlert(Alert.AlertType type, String title, String header, String content) {
@@ -268,6 +271,5 @@ public class LayoutController implements Initializable {
         alert.initOwner(tableView.getScene().getWindow());
         alert.showAndWait();
     }
-
 
 }

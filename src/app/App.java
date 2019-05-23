@@ -15,6 +15,7 @@ public class App extends Application {
      * Main entry point for the JavaFX application
      *
      * @param primaryStage primary stage for the application on which the scene will be set
+     * @throws java.lang.Exception
      */
     @Override
     public void start(Stage primaryStage) throws Exception {

@@ -3,7 +3,6 @@ package model;
 import javafx.scene.image.ImageView;
 
 import java.io.File;
-import java.util.List;
 
 /**
  * @author Koenig Michael
@@ -84,7 +83,13 @@ public class FileItem implements Comparable<FileItem> {
         return getFile().getName().toLowerCase().compareTo(o.getFile().getName().toLowerCase());
     }
 
-    public boolean hasExtension(String[] exts, boolean showHidden) {
+    /**
+     * Check if the file fulfills certain criteria
+     * @param exts  array of extensions to check the file for
+     * @param showHidden    whether hidden files should be filtered out or not
+     * @return  true if the file passes the filters
+     */
+    public boolean checkExtension(String[] exts, boolean showHidden) {
         for (String ext : exts) {
             int i = file.getName().lastIndexOf('.');
 
